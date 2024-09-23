@@ -1,0 +1,86 @@
+[
+    {
+        "question": "When is the salon open?",
+        "answer": "We are open Monday through Saturday from 9:00 AM to 7:00 PM, and Sunday from 10:00 AM to 5:00 PM. We are closed on major holidays."
+    },
+    {
+        "question": "Do you accept walk-ins?",
+        "answer": "While we encourage appointments to minimize wait times, we do our best to accommodate walk-ins whenever possible. However, clients with scheduled appointments will be prioritized."
+    },
+    {
+        "question": "What payment methods do you accept?",
+        "answer": "We accept cash, all major credit cards (Visa, Mastercard, American Express, Discover), and popular mobile payment apps like Apple Pay and Google Pay."
+    },
+    {
+        "question": "Are you accepting new clients?",
+        "answer": "Yes, we are always happy to welcome new clients to our salon."
+    },
+    {
+        "question": "What services do you offer?",
+        "answer": "We offer a wide range of beauty services including haircuts, styling, coloring, manicures, pedicures, facials, waxing, and makeup application. Please visit our website or contact us for a full list of services."
+    },
+    {
+        "question": "What is your cancellation policy?",
+        "answer": "We require at least 24 hours' notice for cancellations or rescheduling. Late cancellations may be subject to a fee."
+    },
+    {
+        "question": "Do you offer gift certificates?",
+        "answer": "Yes, we offer gift certificates that can be purchased in-salon or online. They make the perfect gift for friends and family."
+    },
+    {
+        "question": "Do you offer bridal or group packages?",
+        "answer": "Yes, we offer customized bridal and group packages for special occasions. Please contact us for more information and to discuss your specific needs."
+    },
+    {
+        "question": "Are your products vegan or cruelty-free?",
+        "answer": "Yes, we carry a selection of vegan and cruelty-free products. Please let your stylist or technician know if you have any preferences or concerns."
+    },
+    {
+        "question": "Do you offer services for men and children?",
+        "answer": "Yes, we provide a variety of services for men and children, including haircuts and grooming treatments."
+    },
+    {
+        "question": "Is parking available?",
+        "answer": "Yes, we have a parking lot adjacent to the salon, and street parking is also available."
+    },
+    {
+        "question": "Do you have wheelchair access?",
+        "answer": "Yes, our salon is wheelchair accessible. Please let us know if you require any assistance."
+    },
+    {
+        "question": "What brands of products do you use?",
+        "answer": "We use high-quality professional brands such as BrandX, BrandY, and BrandZ to ensure the best results for our clients."
+    },
+    {
+        "question": "Do you offer loyalty programs or discounts?",
+        "answer": "Yes, we offer seasonal promotions and a loyalty program where you can earn points towards free services. Please ask our staff for details."
+    },
+    {
+        "question": "What COVID-19 safety measures are in place?",
+        "answer": "We follow all recommended guidelines, including regular sanitation of equipment and facilities, wearing masks, and limiting the number of clients in the salon at one time. Your safety is our top priority."
+    },
+    {
+        "question": "How can I book an appointment?",
+        "answer": "You can book an appointment by calling us at (123) 456-7890, using our online booking system on our website, or by visiting the salon in person."
+    },
+    {
+        "question": "What should I do if I'm late for my appointment?",
+        "answer": "If you're running late, please call us as soon as possible. We will do our best to accommodate you, but your appointment may need to be rescheduled to avoid delays for other clients."
+    },
+    {
+        "question": "Do you offer free consultations?",
+        "answer": "Yes, we offer free consultations to discuss your beauty goals and recommend services or treatments that best suit your needs."
+    },
+    {
+        "question": "What is the salon's address?",
+        "answer": "Our address is 123 Glamour St, Teoville, CA 90210."
+    },
+    {
+        "question": "What should I expect during my first visit?",
+        "answer": "During your first visit, we will discuss your beauty goals and preferences, and our stylist or technician will recommend the best services for you. We aim to make your experience as comfortable and enjoyable as possible."
+    },
+    {
+        "question": "Do you offer makeup services for special events?",
+        "answer": "Yes, we offer professional makeup services for weddings, parties, and other special events. Contact us for more details and to book your session."
+    }
+]

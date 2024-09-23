@@ -1,0 +1,14 @@
+langgraph
+langchain
+langchain_openai
+langchain_community
+langchain_core
+python-dotenv
+langchain_pinecone
+pinecone
+jq
+langchain-google-genai
+pandas
+langchain_anthropic
+langchain_groq
+gradio

@@ -1,0 +1,102 @@
+[
+    {
+        "service": "Hairstylist",
+        "responsibilities": [
+            "Provides hair cutting, styling, and treatments.",
+            "Consults with clients on desired hairstyles and recommends suitable options.",
+            "Maintains cleanliness and sanitation of tools and work area."
+        ],
+        "specialists": [
+            {
+                "name": "Emma Thompson"
+            },
+            {
+                "name": "Olivia Parker"
+            }
+        ]
+    },
+    {
+        "service": "Nail Technician",
+        "responsibilities": [
+            "Provides manicures and pedicures.",
+            "Applies nail art, extensions, and other nail treatments.",
+            "Ensures proper sanitation of tools and equipment."
+        ],
+        "specialists": [
+            {
+                "name": "Sophia Chen"
+            },
+            {
+                "name": "Mia Rodriguez"
+            }
+        ]
+    },
+    {
+        "service": "Esthetician",
+        "responsibilities": [
+            "Provides skincare treatments like facials and exfoliation.",
+            "Recommends skincare routines and products.",
+            "Performs hair removal services such as waxing."
+        ],
+        "specialists": [
+            {
+                "name": "Isabella Kim"
+            }
+        ]
+    },
+    {
+        "service": "Makeup Artist",
+        "responsibilities": [
+            "Applies makeup for events, photoshoots, and special occasions.",
+            "Consults with clients on desired looks and styles.",
+            "Keeps up-to-date with makeup trends and products."
+        ],
+        "specialists": [
+            {
+                "name": "Ava Johnson"
+            }
+        ]
+    },
+    {
+        "service": "Massage Therapist",
+        "responsibilities": [
+            "Provides various massage techniques for relaxation and therapy.",
+            "Assesses clients' soft tissue condition and joint quality.",
+            "Maintains client records and treatment plans."
+        ],
+        "specialists": [
+            {
+                "name": "Noah Williams"
+            },
+            {
+                "name": "Liam Davis"
+            }
+        ]
+    },
+    {
+        "service": "Eyebrow Specialist",
+        "responsibilities": [
+            "Shapes and styles eyebrows using various techniques.",
+            "Provides services like threading, waxing, and tinting.",
+            "Advises clients on brow maintenance and care."
+        ],
+        "specialists": [
+            {
+                "name": "Zoe Martinez"
+            }
+        ]
+    },
+    {
+        "service": "Colorist",
+        "responsibilities": [
+            "Specializes in hair coloring techniques.",
+            "Consults with clients to determine desired color outcomes.",
+            "Applies hair dyes, highlights, and color corrections."
+        ],
+        "specialists": [
+            {
+                "name": "Ethan Brown"
+            }
+        ]
+    }
+]
