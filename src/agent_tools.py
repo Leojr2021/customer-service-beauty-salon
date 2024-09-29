@@ -79,20 +79,36 @@ def reschedule_booking (old_date:DateTimeModel, new_date:DateTimeModel, id_numbe
         return "Succesfully rescheduled for the desired time"
 
 @tool
-def cancel_booking (date:DateTimeModel, id_number:IdentificationNumberModel, specialist_name:Literal["emma thompson","olivia parker","sophia chen","mia rodriguez","isabella kim","ava johnson","noah williams","liam davis","zoe martinez","ethan brown"]):
+def cancel_booking(date: DateTimeModel, id_number: IdentificationNumberModel, specialist_name: Literal["emma thompson", "olivia parker", "sophia chen", "mia rodriguez", "isabella kim", "ava johnson", "noah williams", "liam davis", "zoe martinez", "ethan brown"]):
     """
     Canceling an appointment.
     The parameters MUST be mentioned by the user in the query.
     """
     df = pd.read_csv(f'{WORKDIR}/data/syntetic_data/availability.csv')
-    case_to_remove = df[(df['date_slot'] == date.date)&(df['client_to_attend'] == id_number.id)&(df['specialist_name'] == specialist_name)]
-    if len(case_to_remove) == 0:
-        return "You don´t have any appointment with that specifications"
+    
+    # Convert client_to_attend to float for comparison
+    df['client_to_attend'] = pd.to_numeric(df['client_to_attend'], errors='coerce')
+    
+    # Convert date to string for comparison
+    date_str = date.date.split()[0]  # Extract just the date part
+    
+    case_to_remove = df[
+        (df['date_slot'].str.startswith(date_str)) &
+        (df['client_to_attend'] == float(id_number.id)) &
+        (df['specialist_name'] == specialist_name)
+    ]
+    
+    if case_to_remove.empty:
+        return "You don't have any appointment with those specifications"
     else:
-        df.loc[(df['date_slot'] == date.date) & (df['client_to_attend'] == id_number.id) & (df['specialist_name'] == specialist_name), ['is_available', 'client_to_attend']] = [True, None]
-        df.to_csv(f'{WORKDIR}/data/syntetic_data/availability.csv', index = False)
-
-        return "Succesfully cancelled"
+        # Update the row
+        df.loc[case_to_remove.index, 'is_available'] = True
+        df.loc[case_to_remove.index, 'client_to_attend'] = None
+        
+        # Save the updated DataFrame back to CSV
+        df.to_csv(f'{WORKDIR}/data/syntetic_data/availability.csv', index=False)
+        
+        return "Successfully cancelled"
 
 @tool
 def get_salon_services():
@@ -127,7 +143,7 @@ def book_appointment(desired_date:DateTimeModel, id_number:IdentificationNumberM
             client_id = int(id_number.id) if isinstance(id_number.id, str) else id_number.id
             logger.info(f"Setting appointment for client ID: {client_id}")
             
-            df.loc[(df['date_slot'] == desired_date.date) & (df['specialist_name'] == specialist_name) & (df['is_available'] == True), ['is_available','client_to_attend']] = [False, client_id]
+            df.loc[(df['date_slot'] == desired_date.date) & (df['specialist_name'] == specialist_name) & (df['is_available'] == True), ['is_available','client_to_attend']] = [False, float(client_id)]
             
             df.to_csv(f'{WORKDIR}/data/syntetic_data/availability.csv', index=False)
             logger.info("Appointment set successfully")

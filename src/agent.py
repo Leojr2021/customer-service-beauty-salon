@@ -100,7 +100,7 @@ def chat_with_ai(message, history):
         },
         config={
             "configurable": {"thread_id": 42},
-            "recursion_limit": 50  # Increase this value
+            "recursion_limit": 50  
         }
     )
     ai_response = state["messages"][-1].content
