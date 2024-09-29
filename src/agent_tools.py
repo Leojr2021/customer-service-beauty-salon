@@ -15,11 +15,11 @@ import pandas as pd
 import json
 from src.vector_database.main import PineconeManagment
 from src.utils import format_retrieved_docs
+from langchain_openai import OpenAIEmbeddings
 
 pinecone_conn = PineconeManagment()
-pinecone_conn.loading_vdb(index_name = 'zenbeautysalon')
-retriever = pinecone_conn.vdb.as_retriever(search_type="similarity", 
-                                    search_kwargs={"k": 2})
+pinecone_conn.loading_vdb(index_name='zenbeautysalon')
+retriever = pinecone_conn.vdb.as_retriever(search_type="similarity", search_kwargs={"k": 5})
 rag_chain = retriever | format_retrieved_docs
 
 #All the tools to consider
@@ -191,7 +191,10 @@ def retrieve_faq_info(question:str):
     Call this tool if question is regarding center:
     For example: is it open? Do you have parking? Can  I go with bike? etc...
     """
-    return rag_chain.invoke(question)
+    results = rag_chain.invoke(question)
+    if results.startswith("I couldn't find an exact match"):
+        return results + " If you need more specific information, please feel free to ask, and I'll do my best to help or direct you to the right resource."
+    return results
 
 @tool
 def get_specialist_services(specialist_name:Literal["emma thompson","olivia parker","sophia chen","mia rodriguez","isabella kim","ava johnson","noah williams","liam davis","zoe martinez","ethan brown"]):

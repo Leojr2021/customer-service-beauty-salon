@@ -1,11 +1,11 @@
-langgraph
 langchain
+langchain_pinecone
 langchain_openai
 langchain_community
 langchain_core
+pinecone-client
 python-dotenv
-langchain_pinecone
-pinecone
+langgraph
 jq
 langchain-google-genai
 pandas

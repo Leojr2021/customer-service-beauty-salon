@@ -504,9 +504,9 @@ date_slot,specialization,specialist_name,is_available,client_to_attend
 2024-09-30 14:00,nail_technician,sophia chen,False,1000049.0
 2024-09-30 14:30,nail_technician,sophia chen,True,
 2024-09-30 15:00,nail_technician,sophia chen,False,1000052.0
-2024-09-30 15:30,nail_technician,sophia chen,True,
+2024-09-30 15:30,nail_technician,sophia chen,False,1100017.0
 2024-09-30 16:00,nail_technician,sophia chen,True,
-2024-09-30 16:30,nail_technician,sophia chen,True,
+2024-09-30 16:30,nail_technician,sophia chen,False,1100017.0
 2024-10-01 08:00,nail_technician,sophia chen,False,1000035.0
 2024-10-01 08:30,nail_technician,sophia chen,True,
 2024-10-01 09:00,nail_technician,sophia chen,True,
@@ -881,7 +881,7 @@ date_slot,specialization,specialist_name,is_available,client_to_attend
 2024-09-28 11:30,esthetician,isabella kim,True,
 2024-09-28 12:00,esthetician,isabella kim,True,
 2024-09-28 12:30,esthetician,isabella kim,True,
-2024-09-30 08:00,esthetician,isabella kim,True,
+2024-09-30 08:00,esthetician,isabella kim,False,1100101.0
 2024-09-30 08:30,esthetician,isabella kim,True,
 2024-09-30 09:00,esthetician,isabella kim,True,
 2024-09-30 09:30,esthetician,isabella kim,True,
@@ -1501,7 +1501,7 @@ date_slot,specialization,specialist_name,is_available,client_to_attend
 2024-10-01 13:30,massage_therapist,liam davis,False,1000088.0
 2024-10-01 14:00,massage_therapist,liam davis,False,1000088.0
 2024-10-01 14:30,massage_therapist,liam davis,False,1000058.0
-2024-10-01 15:00,massage_therapist,liam davis,True,
+2024-10-01 15:00,massage_therapist,liam davis,False,1100087.0
 2024-10-01 15:30,massage_therapist,liam davis,True,
 2024-10-01 16:00,massage_therapist,liam davis,True,
 2024-10-01 16:30,massage_therapist,liam davis,True,

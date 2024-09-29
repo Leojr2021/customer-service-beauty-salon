@@ -9,12 +9,9 @@ sys.path.append(WORKDIR)
 
 from src.vector_database.utils import PineconeManagment
 
-def deploy_vectordatabase(index_name):
+def reinitialize_vectordatabase(index_name):
     vdb_app = PineconeManagment()
-    docs = vdb_app.reading_datasource()
-    vdb_app.creating_index(index_name = index_name, docs = docs)
-
-
+    vdb_app.reinitialize_database(index_name)
 
 if __name__ == '__main__':
-    deploy_vectordatabase(index_name = 'zenbeautysalon')
+    reinitialize_vectordatabase(index_name='zenbeautysalon')
