@@ -1481,7 +1481,7 @@ date_slot,specialization,specialist_name,is_available,client_to_attend
 2024-09-30 12:30,massage_therapist,liam davis,True,
 2024-09-30 13:00,massage_therapist,liam davis,False,1000083.0
 2024-09-30 13:30,massage_therapist,liam davis,True,
-2024-09-30 14:00,massage_therapist,liam davis,True,
+2024-09-30 14:00,massage_therapist,liam davis,False,1100064.0
 2024-09-30 14:30,massage_therapist,liam davis,True,
 2024-09-30 15:00,massage_therapist,liam davis,True,
 2024-09-30 15:30,massage_therapist,liam davis,False,1000004.0

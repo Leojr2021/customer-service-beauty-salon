@@ -1,25 +1,29 @@
-from langchain_core.pydantic_v1 import constr, BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 import re
+from typing import Annotated
 
 
 class DateTimeModel(BaseModel):
     """
     The way the date should be structured and formatted
     """
-    date: str = Field(..., description="Propertly formatted date", pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$')
+    date: Annotated[str, Field(pattern=r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$')]
 
-    @validator("date")
+    @field_validator("date")
+    @classmethod
     def check_format_date(cls, v):
         if not re.match(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$', v):
             raise ValueError("The date should be in format 'YYYY-MM-DD HH:MM'")
         return v
+
 class DateModel(BaseModel):
     """
     The way the date should be structured and formatted
     """
-    date: str = Field(..., description="Propertly formatted date", pattern=r'^\d{4}-\d{2}-\d{2}$')
+    date: Annotated[str, Field(pattern=r'^\d{4}-\d{2}-\d{2}$')]
 
-    @validator("date")
+    @field_validator("date")
+    @classmethod
     def check_format_date(cls, v):
         if not re.match(r'^\d{4}-\d{2}-\d{2}$', v):
             raise ValueError("The date must be in the format 'YYYY-MM-DD'")
@@ -30,9 +34,10 @@ class IdentificationNumberModel(BaseModel):
     """
     The way the ID should be structured and formatted
     """
-    id: str = Field(..., description="identification number without dots")
+    id: str
 
-    @validator("id")
+    @field_validator("id")
+    @classmethod
     def check_format_id(cls, v):
         try:
             id_int = int(v)

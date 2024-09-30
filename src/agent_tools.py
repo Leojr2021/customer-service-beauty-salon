@@ -15,7 +15,6 @@ import pandas as pd
 import json
 from src.vector_database.main import PineconeManagment
 from src.utils import format_retrieved_docs
-from langchain_openai import OpenAIEmbeddings
 
 pinecone_conn = PineconeManagment()
 pinecone_conn.loading_vdb(index_name='zenbeautysalon')
@@ -63,20 +62,51 @@ def check_availability_by_service (desired_date:DateModel, service:Literal["hair
     return output
 
 @tool
-def reschedule_booking (old_date:DateTimeModel, new_date:DateTimeModel, id_number:IdentificationNumberModel, specialist_name:Literal["emma thompson","olivia parker","sophia chen","mia rodriguez","isabella kim","ava johnson","noah williams","liam davis","zoe martinez","ethan brown"]):
+def reschedule_booking(old_date: DateTimeModel, new_date: DateTimeModel, id_number: IdentificationNumberModel, specialist_name: Literal["emma thompson", "olivia parker", "sophia chen", "mia rodriguez", "isabella kim", "ava johnson", "noah williams", "liam davis", "zoe martinez", "ethan brown"]):
     """
     Rescheduling an appointment.
     The parameters MUST be mentioned by the user in the query.
     """
-    #Dummy data
-    df = pd.read_csv(f'{WORKDIR}/data/syntetic_data/availability.csv')
-    available_for_desired_date = df[(df['date_slot'] == new_date.date)&(df['is_available'] == True)&(df['specialist_name'] == specialist_name)]
-    if len(available_for_desired_date) == 0:
-        return "Not available slots in the desired period"
-    else:
-        cancel_appointment.invoke({'date':old_date, 'id_number':id_number, 'specialist_name':specialist_name})
-        set_appointment.invoke({'desired_date':new_date, 'id_number': id_number, 'specialist_name': specialist_name})
-        return "Succesfully rescheduled for the desired time"
+    logger = logging.getLogger(__name__)
+    logger.info(f"Attempting to reschedule appointment: old_date={old_date.date}, new_date={new_date.date}, id={id_number.id}, specialist={specialist_name}")
+    
+    try:
+        df = pd.read_csv(f'{WORKDIR}/data/syntetic_data/availability.csv')
+        
+        # Check if the new slot is available
+        new_slot_available = df[(df['date_slot'] == new_date.date) & 
+                                (df['specialist_name'] == specialist_name) & 
+                                (df['is_available'] == True)]
+        
+        if new_slot_available.empty:
+            logger.warning("The requested new slot is not available")
+            return "The requested new time slot is not available. Please choose a different time."
+        
+        # Find the old appointment
+        old_appointment = df[(df['date_slot'] == old_date.date) & 
+                             (df['specialist_name'] == specialist_name) & 
+                             (df['client_to_attend'] == float(id_number.id))]
+        
+        if old_appointment.empty:
+            logger.warning("No existing appointment found to reschedule")
+            return "No existing appointment found with the provided details. Please check your information and try again."
+        
+        # Update the old slot to available
+        df.loc[old_appointment.index, ['is_available', 'client_to_attend']] = [True, None]
+        
+        # Book the new slot
+        new_slot_index = new_slot_available.index[0]
+        df.loc[new_slot_index, ['is_available', 'client_to_attend']] = [False, float(id_number.id)]
+        
+        # Save the updated DataFrame
+        df.to_csv(f'{WORKDIR}/data/syntetic_data/availability.csv', index=False)
+        
+        logger.info("Appointment successfully rescheduled")
+        return f"Your appointment has been successfully rescheduled from {old_date.date} to {new_date.date} with {specialist_name}."
+    
+    except Exception as e:
+        logger.error(f"Error in reschedule_booking: {str(e)}")
+        return f"An error occurred while rescheduling the appointment: {str(e)}"
 
 @tool
 def cancel_booking(date: DateTimeModel, id_number: IdentificationNumberModel, specialist_name: Literal["emma thompson", "olivia parker", "sophia chen", "mia rodriguez", "isabella kim", "ava johnson", "noah williams", "liam davis", "zoe martinez", "ethan brown"]):
