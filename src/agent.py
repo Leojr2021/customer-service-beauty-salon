@@ -72,18 +72,34 @@ workflow.add_node("agent", call_model)
 workflow.add_node("tools", tool_node)
 workflow.add_node("human_feedback", read_human_feedback)
 workflow.set_entry_point("agent")
+
+def should_continue(state):
+    last_message = state["messages"][-1]
+    if isinstance(last_message, HumanMessage):
+        return "agent"
+    if "tool_calls" in last_message.additional_kwargs:
+        return "tools"
+    return "human_feedback"
+
 workflow.add_conditional_edges(
     "agent",
     should_continue,
-    {"human_feedback": 'human_feedback',
-    "tools": "tools"}
+    {
+        "agent": "agent",
+        "tools": "tools",
+        "human_feedback": "human_feedback"
+    }
 )
+
 workflow.add_conditional_edges(
     "human_feedback",
     should_continue_with_feedback,
-    {"agent": 'agent',
-    "end": END}
+    {
+        "agent": 'agent',
+        "end": END
+    }
 )
+
 workflow.add_edge("tools", 'agent')
 
 checkpointer = MemorySaver()
@@ -100,7 +116,7 @@ def chat_with_ai(message, history=[]):
         },
         config={
             "configurable": {"thread_id": 42},
-            "recursion_limit": 50  
+            "recursion_limit": 100  # Increased from 50 to 100
         }
     )
     ai_response = state["messages"][-1].content

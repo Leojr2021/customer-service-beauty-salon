@@ -42,7 +42,7 @@ def check_availability_by_specialist (desired_date:DateModel, specialist_name:Li
     return output
 
 @tool
-def check_availability_by_service (desired_date:DateModel, service:Literal["hairstylist","nail_technician","esthetician","makeup_artist","massage_therapist","eyebrow_specialist","colorist"]):
+def check_availability_by_service(desired_date: DateModel, service: Literal["hairstylist", "nail_technician", "esthetician", "makeup_artist", "massage_therapist", "eyebrow_specialist", "colorist"]):
     """
     Checking the database if we have availability for the specific service.
     The parameters should be mentioned by the user in the query
@@ -50,16 +50,17 @@ def check_availability_by_service (desired_date:DateModel, service:Literal["hair
     #Dummy data
     df = pd.read_csv(f"{WORKDIR}/data/syntetic_data/availability.csv")
     df['date_slot_time'] = df['date_slot'].apply(lambda input: input.split(' ')[-1])
-    rows = df[(df['date_slot'].apply(lambda input: input.split(' ')[0]) == desired_date.date) & (df['service'] == service) & (df['is_available'] == True)].groupby(['service', 'specialist_name'])['date_slot_time'].apply(list).reset_index(name='available_slots')
+    rows = df[(df['date_slot'].apply(lambda input: input.split(' ')[0]) == desired_date.date) & 
+              (df['service'] == service) & 
+              (df['is_available'] == True)]
 
     if len(rows) == 0:
-        output = "No availability in the entire day"
+        return f"No availability for {service} on {desired_date.date}"
     else:
-        output = f'This availability for {desired_date.date}\n'
-        for row in rows.values:
-            output += row[1] + ". Available slots: " + ', '.join(row[2])+'\n'
-
-    return output
+        available_slots = rows['date_slot_time'].tolist()
+        output = f'Available slots for {service} on {desired_date.date}:\n'
+        output += ", ".join(available_slots)
+        return output
 
 @tool
 def reschedule_booking(old_date: DateTimeModel, new_date: DateTimeModel, id_number: IdentificationNumberModel, specialist_name: Literal["emma thompson", "olivia parker", "sophia chen", "mia rodriguez", "isabella kim", "ava johnson", "noah williams", "liam davis", "zoe martinez", "ethan brown"]):

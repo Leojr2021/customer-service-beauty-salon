@@ -717,7 +717,7 @@ date_slot,specialization,specialist_name,is_available,client_to_attend
 2024-10-01 13:30,nail_technician,mia rodriguez,True,
 2024-10-01 14:00,nail_technician,mia rodriguez,True,
 2024-10-01 14:30,nail_technician,mia rodriguez,False,1000003.0
-2024-10-01 15:00,nail_technician,mia rodriguez,True,
+2024-10-01 15:00,nail_technician,mia rodriguez,False,48592758.0
 2024-10-01 15:30,nail_technician,mia rodriguez,False,1000099.0
 2024-10-01 16:00,nail_technician,mia rodriguez,False,1000085.0
 2024-10-01 16:30,nail_technician,mia rodriguez,True,
@@ -1873,7 +1873,7 @@ date_slot,specialization,specialist_name,is_available,client_to_attend
 2024-09-30 12:30,colorist,ethan brown,True,
 2024-09-30 13:00,colorist,ethan brown,False,1000008.0
 2024-09-30 13:30,colorist,ethan brown,True,
-2024-09-30 14:00,colorist,ethan brown,True,
+2024-09-30 14:00,colorist,ethan brown,False,48592758.0
 2024-09-30 14:30,colorist,ethan brown,True,
 2024-09-30 15:00,colorist,ethan brown,True,
 2024-09-30 15:30,colorist,ethan brown,True,
