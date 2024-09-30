@@ -92,7 +92,7 @@ app = workflow.compile(checkpointer=checkpointer,
                        interrupt_before=['human_feedback'])
 
 # Gradio chat function
-def chat_with_ai(message, history):
+def chat_with_ai(message, history=[]):
     state = {"messages": [HumanMessage(content=msg) for _, msg in history]}
     state = app.invoke(
         {

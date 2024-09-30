@@ -13,3 +13,4 @@ langchain_anthropic
 langchain_groq
 gradio
 pydantic>=2.0.0
+python-telegram-bot
