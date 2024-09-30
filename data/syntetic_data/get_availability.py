@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 import sys
+from zoneinfo import ZoneInfo
 
 load_dotenv()
 WORKDIR = os.getenv("WORKDIR")
@@ -25,7 +26,9 @@ data = [
 
 # Function to generate time slots
 def generate_time_slots(start_time, end_time, interval_minutes):
-    current_time = start_time
+    TIMEZONE = os.getenv('TIMEZONE', 'America/New_York')
+    current_time = start_time.replace(tzinfo=ZoneInfo(TIMEZONE))
+    end_time = end_time.replace(tzinfo=ZoneInfo(TIMEZONE))
     time_slots = []
     while current_time < end_time:
         time_slots.append(current_time.strftime("%Y-%m-%d %H:%M"))

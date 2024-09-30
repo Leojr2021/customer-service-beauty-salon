@@ -1,4 +1,5 @@
 data/availability.csv
+google_calendar_credentials.json
 
 myenv
 # Byte-compiled / optimized / DLL files

@@ -17,7 +17,7 @@ from langchain_core.messages import AnyMessage, HumanMessage
 import operator
 from src.validators.agent_validators import *
 from src.agent_tools import check_availability_by_specialist, check_availability_by_service, check_results, book_appointment, cancel_booking, reminder_appointment, reschedule_booking, retrieve_faq_info, get_salon_services, get_specialist_services
-from datetime import datetime
+from datetime import datetime, timedelta
 from src.utils import get_model
 import logging
 import logging_config
