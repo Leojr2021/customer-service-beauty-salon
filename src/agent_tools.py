@@ -6,9 +6,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 load_dotenv()
-WORKDIR=os.getenv("WORKDIR")
-os.chdir(WORKDIR)
-sys.path.append(WORKDIR)
+
 
 from langchain_core.tools import tool
 from src.validators.agent_validators import *
@@ -39,7 +37,7 @@ def check_availability_by_specialist(desired_date: DateModel, specialist_name: L
 
     try:
         # Load the data
-        df = pd.read_csv(f"{WORKDIR}/data/syntetic_data/availability.csv")
+        df = pd.read_csv(f"data/syntetic_data/availability.csv")
         logger.info(f"Availability data loaded. Shape: {df.shape}")
 
         # Filter the dataframe
@@ -74,7 +72,7 @@ def check_availability_by_service(desired_date: DateModel, service: str):
     logger.info(f"Checking availability for service: {service} on date: {desired_date.date}")
 
     try:
-        df = pd.read_csv(f"{WORKDIR}/data/syntetic_data/availability.csv")
+        df = pd.read_csv(f"data/syntetic_data/availability.csv")
         
         # Filter the dataframe for the specific date and service
         available_slots = df[
@@ -103,7 +101,7 @@ def reschedule_booking(old_date: DateTimeModel, new_date: DateTimeModel, id_numb
     logger.info(f"Attempting to reschedule appointment: old_date={old_date.date}, new_date={new_date.date}, id={id_number.id}, specialist={specialist_name}")
     
     try:
-        df = pd.read_csv(f'{WORKDIR}/data/syntetic_data/availability.csv')
+        df = pd.read_csv(f'data/syntetic_data/availability.csv')
         
         # Check if the new slot is available
         new_slot_available = df[(df['date_slot'] == new_date.date) & 
@@ -131,7 +129,7 @@ def reschedule_booking(old_date: DateTimeModel, new_date: DateTimeModel, id_numb
         df.loc[new_slot_index, ['is_available', 'client_to_attend']] = [False, float(id_number.id)]
         
         # Save the updated DataFrame
-        df.to_csv(f'{WORKDIR}/data/syntetic_data/availability.csv', index=False)
+        df.to_csv(f'data/syntetic_data/availability.csv', index=False)
         
         # Update event in Google Calendar
         TIMEZONE = os.getenv('TIMEZONE', 'America/New_York')
@@ -164,7 +162,7 @@ def cancel_booking(date: DateTimeModel, id_number: IdentificationNumberModel, sp
     Canceling an appointment and removing it from Google Calendar.
     The parameters MUST be mentioned by the user in the query.
     """
-    df = pd.read_csv(f'{WORKDIR}/data/syntetic_data/availability.csv')
+    df = pd.read_csv(f'data/syntetic_data/availability.csv')
     
     # Convert client_to_attend to float for comparison
     df['client_to_attend'] = pd.to_numeric(df['client_to_attend'], errors='coerce')
@@ -186,7 +184,7 @@ def cancel_booking(date: DateTimeModel, id_number: IdentificationNumberModel, sp
         df.loc[case_to_remove.index, 'client_to_attend'] = None
         
         # Save the updated DataFrame back to CSV
-        df.to_csv(f'{WORKDIR}/data/syntetic_data/availability.csv', index=False)
+        df.to_csv(f'data/syntetic_data/availability.csv', index=False)
         
         # Remove event from Google Calendar
         events = google_calendar.list_upcoming_events()
@@ -203,7 +201,7 @@ def get_salon_services():
     Obtain information about the specialists and services/services we provide.
     The parameters MUST be mentioned by the user in the query
     """
-    with open(f"{WORKDIR}/data/catalog.json","r") as file:
+    with open(f"data/catalog.json","r") as file:
         file = json.loads(file.read())
     
     return file
@@ -217,7 +215,7 @@ def book_appointment(desired_date: DateTimeModel, id_number: IdentificationNumbe
     logger = logging.getLogger(__name__)
     logger.info(f"Attempting to set appointment with parameters: date={desired_date.date}, id={id_number.id}, specialist={specialist_name}")
     try:
-        df = pd.read_csv(f'{WORKDIR}/data/syntetic_data/availability.csv')
+        df = pd.read_csv(f'data/syntetic_data/availability.csv')
         logger.info(f"Availability data loaded. Shape: {df.shape}")
         
         # Convert desired_date to datetime object
@@ -233,7 +231,7 @@ def book_appointment(desired_date: DateTimeModel, id_number: IdentificationNumbe
             # Update availability
             df.loc[(df['date_slot'] == formatted_date) & (df['specialist_name'] == specialist_name), 'is_available'] = False
             df.loc[(df['date_slot'] == formatted_date) & (df['specialist_name'] == specialist_name), 'client_to_attend'] = id_number.id
-            df.to_csv(f'{WORKDIR}/data/syntetic_data/availability.csv', index=False)
+            df.to_csv(f'data/syntetic_data/availability.csv', index=False)
             logger.info("Availability updated")
             
             # Add to Google Calendar
@@ -258,19 +256,6 @@ def book_appointment(desired_date: DateTimeModel, id_number: IdentificationNumbe
         logger.error(f"Error setting appointment: {str(e)}")
         return f"An error occurred while setting the appointment: {str(e)}"
 
-@tool
-def check_results(id_number:IdentificationNumberModel):
-    """
-    Check if the result of the pacient is available.
-    The parameters MUST be mentioned by the user in the query
-    """
-    #Dummy data
-    df = pd.read_csv(f'{WORKDIR}/data/syntetic_data/studies_status.csv')
-    rows = df[(df['client_id'] == id_number.id)][['medical_study','is_available']]
-    if len(rows) == 0:
-        return "The client doesn't have any study made"
-    else:
-        return rows
 
 @tool
 def reminder_appointment(id_number:IdentificationNumberModel):
@@ -278,7 +263,7 @@ def reminder_appointment(id_number:IdentificationNumberModel):
     Returns when the pacient has its appointment with the specialist
     The parameters MUST be mentioned by the user in the query
     """
-    df = pd.read_csv(f'{WORKDIR}/data/syntetic_data/availability.csv')
+    df = pd.read_csv(f'data/syntetic_data/availability.csv')
     rows = df[(df['client_to_attend'] == id_number.id)][['time_slot','specialist_name','service']]
     if len(rows) == 0:
         return "The client doesn't have any appointment yet"
@@ -304,7 +289,7 @@ def get_specialist_services(specialist_name:Literal["emma thompson","olivia park
     Retrieve which service covers a specific specialist.
     Use this internal tool if you need more information about a specialist for setting an appointment.
     """
-    with open(f"{WORKDIR}/data/catalog.json","r") as file:
+    with open(f"data/catalog.json","r") as file:
         catalog = json.loads(file.read())
 
     return str([{service['service']: [specialist['name'] for specialist in service['specialists']]} for service in catalog])

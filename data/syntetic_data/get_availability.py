@@ -4,9 +4,7 @@ import sys
 from zoneinfo import ZoneInfo
 
 load_dotenv()
-WORKDIR = os.getenv("WORKDIR")
-os.chdir(WORKDIR)
-sys.path.append(WORKDIR)
+
 
 import csv
 from datetime import datetime, timedelta
@@ -72,4 +70,4 @@ def generate_csv(filename):
                     writer.writerow([slot, specialization["specialization"], specialist["name"], is_available, client_to_attend])
 
 if __name__ == '__main__':
-    generate_csv(f"{WORKDIR}/data/syntetic_data/availability.csv")
+    generate_csv(f"/data/syntetic_data/availability.csv")

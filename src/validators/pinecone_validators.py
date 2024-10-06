@@ -1,11 +1,3 @@
-import os
-from dotenv import load_dotenv
-import sys
-
-load_dotenv()
-WORKDIR=os.getenv("WORKDIR")
-os.chdir(WORKDIR)
-sys.path.append(WORKDIR)
 
 from pydantic import BaseModel, Field, field_validator
 import re

@@ -1,13 +1,7 @@
-import os
 from dotenv import load_dotenv
-import sys
+from src.vector_database.utils import PineconeManagment
 
 load_dotenv()
-WORKDIR=os.getenv("WORKDIR")
-os.chdir(WORKDIR)
-sys.path.append(WORKDIR)
-
-from src.vector_database.utils import PineconeManagment
 
 def reinitialize_vectordatabase(index_name):
     vdb_app = PineconeManagment()

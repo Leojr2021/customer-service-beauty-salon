@@ -1273,7 +1273,7 @@ date_slot,specialization,specialist_name,is_available,client_to_attend
 2024-10-05 11:30,massage_therapist,noah williams,True,
 2024-10-05 12:00,massage_therapist,noah williams,True,
 2024-10-05 12:30,massage_therapist,noah williams,True,
-2024-10-07 08:00,massage_therapist,noah williams,True,
+2024-10-07 08:00,massage_therapist,noah williams,False,1100003
 2024-10-07 08:30,massage_therapist,noah williams,True,
 2024-10-07 09:00,massage_therapist,noah williams,True,
 2024-10-07 09:30,massage_therapist,noah williams,False,1000057.0
