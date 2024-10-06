@@ -1,12 +1,8 @@
-import os
 from dotenv import load_dotenv
-import sys
 import gradio as gr
 
 load_dotenv()
-WORKDIR=os.getenv("WORKDIR")
-os.chdir(WORKDIR)
-sys.path.append(WORKDIR)
+
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.checkpoint.memory import MemorySaver
@@ -116,7 +112,7 @@ def chat_with_ai(message, history=[]):
         },
         config={
             "configurable": {"thread_id": 42},
-            "recursion_limit": 100  # Increased from 50 to 100
+            "recursion_limit": 100  
         }
     )
     ai_response = state["messages"][-1].content

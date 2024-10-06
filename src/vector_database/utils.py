@@ -10,10 +10,7 @@ from pinecone import Pinecone, ServerlessSpec
 from typing import Dict
 import logging
 
-load_dotenv()
-WORKDIR = os.getenv("WORKDIR")
-os.chdir(WORKDIR)
-sys.path.append(WORKDIR)
+
 
 from src.validators.pinecone_validators import IndexNameStructure, ExpectedNewData
 
@@ -31,7 +28,7 @@ class PineconeManagment:
 
     def reading_datasource(self):
         loader = JSONLoader(
-            file_path=f'{WORKDIR}/faq/data.json',
+            file_path=f'/faq/data.json',
             jq_schema='.[]',
             text_content=False,
             metadata_func=self.__extract_metadata)
