@@ -1,45 +1,29 @@
-import os
-import threading
-from src.agent import iface
-from src.telegram_bot import run_telegram_bot
-from telegram.ext import Application
 import asyncio
-from telegram.error import NetworkError, Conflict
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from src.telegram_bot import run_telegram_bot
+from src.agent import gradio_interface
+import uvicorn
+import gradio as gr
 
-def run_gradio():
-    iface.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 5000)))
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Run the Telegram bot
+    telegram_task = asyncio.create_task(run_telegram_bot())
+    yield
+    # Shutdown: Cancel the Telegram bot task
+    telegram_task.cancel()
+    try:
+        await telegram_task
+    except asyncio.CancelledError:
+        pass
 
-async def run_bot():
-    application = Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
-    
-    while True:
-        try:
-            await application.initialize()
-            await application.start()
-            await application.bot.delete_webhook()  # Add this line to reset the webhook
-            await run_telegram_bot(application)
-            await application.stop()
-        except NetworkError:
-            print("Network error occurred. Retrying in 10 seconds...")
-            await asyncio.sleep(10)
-        except Conflict:
-            print("Conflict error occurred. Resetting webhook and retrying in 10 seconds...")
-            await application.bot.delete_webhook()
-            await asyncio.sleep(10)
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-            break
+app = FastAPI(lifespan=lifespan)
 
-async def main():
-    # Start Gradio interface in a separate thread
-    gradio_thread = threading.Thread(target=run_gradio)
-    gradio_thread.start()
+# Mount Gradio app to FastAPI
+app = gr.mount_gradio_app(app, gradio_interface, path="/")
 
-    # Run Telegram bot in the main thread
-    await run_bot()
-
-    # Keep the main thread alive
-    gradio_thread.join()
+# Your other FastAPI routes and setup code here
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=True)

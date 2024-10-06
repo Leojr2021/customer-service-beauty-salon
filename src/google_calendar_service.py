@@ -20,7 +20,7 @@ class GoogleCalendarManager:
 
     def _authenticate(self):
         service_account_json = GOOGLE_SERVICE_ACCOUNT_JSON
-        print(f"First 20 characters of service account JSON: {service_account_json[:20]}")
+        
         if not service_account_json:
             raise ValueError("GOOGLE_SERVICE_ACCOUNT_JSON environment variable is not set")
 

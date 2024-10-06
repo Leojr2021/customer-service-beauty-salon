@@ -699,7 +699,7 @@ date_slot,specialization,specialist_name,is_available,client_to_attend,event_id
 2024-10-07 13:30,nail_technician,mia rodriguez,False,1000031.0,
 2024-10-07 14:00,nail_technician,mia rodriguez,False,1000032.0,
 2024-10-07 14:30,nail_technician,mia rodriguez,False,1000084.0,
-2024-10-07 15:00,nail_technician,mia rodriguez,False,1099033,svo145i4of5hv2rgqh2p3c1uk8
+2024-10-07 15:00,nail_technician,mia rodriguez,False,1099033.0,svo145i4of5hv2rgqh2p3c1uk8
 2024-10-07 15:30,nail_technician,mia rodriguez,False,1000033.0,
 2024-10-07 16:00,nail_technician,mia rodriguez,True,,
 2024-10-07 16:30,nail_technician,mia rodriguez,False,1000012.0,
@@ -1278,7 +1278,7 @@ date_slot,specialization,specialist_name,is_available,client_to_attend,event_id
 2024-10-07 09:00,massage_therapist,noah williams,True,,
 2024-10-07 09:30,massage_therapist,noah williams,False,1000057.0,
 2024-10-07 10:00,massage_therapist,noah williams,False,1000052.0,
-2024-10-07 10:30,massage_therapist,noah williams,True,,
+2024-10-07 10:30,massage_therapist,noah williams,False,1099010,enl5dfckl8ga4ncip6sqgfj4hk
 2024-10-07 11:00,massage_therapist,noah williams,False,99999999.0,
 2024-10-07 11:30,massage_therapist,noah williams,True,,
 2024-10-07 12:00,massage_therapist,noah williams,False,1000031.0,

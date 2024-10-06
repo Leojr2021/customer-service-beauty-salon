@@ -123,21 +123,24 @@ def chat_with_ai(message, history=[]):
     
     return ai_response
 
-# Gradio interface
-iface = gr.ChatInterface(
-    chat_with_ai,
-    chatbot=gr.Chatbot(height=300),
-    textbox=gr.Textbox(placeholder="Type your message here...", container=False, scale=7),
-    title="Zen Beauty Salon Assistant",
-    description="Welcome to Zen Beauty Salon's  Assistant. How may I assist you today?",
-    theme="soft",
-    examples=["What services do you offer?", "Can I book an appointment?", "What are your operating hours?"],
-    cache_examples=False,
-    retry_btn=None,
-    undo_btn="Delete Previous",
-    clear_btn="Clear",
-)
+# Define the Gradio interface
+def create_gradio_interface():
+    return gr.ChatInterface(
+        chat_with_ai,
+        chatbot=gr.Chatbot(height=300),
+        textbox=gr.Textbox(placeholder="Type your message here...", container=False, scale=7),
+        title="Zen Beauty Salon Assistant",
+        description="Welcome to Zen Beauty Salon's Assistant. How may I assist you today?",
+        theme="soft",
+        examples=["What services do you offer?", "Can I book an appointment?", "What are your operating hours?"],
+        cache_examples=False,
+        retry_btn=None,
+        undo_btn="Delete Previous",
+        clear_btn="Clear",
+    )
 
-# Launch the Gradio interface
+# This allows the interface to be imported without launching
+gradio_interface = create_gradio_interface()
+
 if __name__ == "__main__":
-    iface.launch()
+    gradio_interface.launch()

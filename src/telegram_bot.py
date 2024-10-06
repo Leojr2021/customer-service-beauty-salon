@@ -1,4 +1,5 @@
 import os
+import asyncio
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
@@ -15,13 +16,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     ai_response = chat_with_ai(user_message, [])
     await update.message.reply_text(ai_response)
 
-def run_telegram_bot():
+async def run_telegram_bot():
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    await application.initialize()
+    await application.start()
+    await application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
-    run_telegram_bot()
+    asyncio.run(run_telegram_bot())
