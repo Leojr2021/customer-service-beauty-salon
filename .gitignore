@@ -1,6 +1,10 @@
 data/availability.csv
 google_calendar_credentials.json
 
+.env
+*.log
+__pycache__/
+
 myenv
 # Byte-compiled / optimized / DLL files
 __pycache__/

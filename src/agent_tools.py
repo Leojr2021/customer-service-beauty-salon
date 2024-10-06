@@ -17,12 +17,15 @@ import pandas as pd
 import json
 from src.vector_database.main import PineconeManagment
 from src.utils import format_retrieved_docs
-from src.google_calendar import add_event_to_calendar
+from src.google_calendar_service import GoogleCalendarManager
 
 pinecone_conn = PineconeManagment()
 pinecone_conn.loading_vdb(index_name='zenbeautysalon')
 retriever = pinecone_conn.vdb.as_retriever(search_type="similarity", search_kwargs={"k": 5})
 rag_chain = retriever | format_retrieved_docs
+
+# Initialize GoogleCalendarManager
+google_calendar = GoogleCalendarManager()
 
 #All the tools to consider
 @tool
@@ -63,25 +66,32 @@ def check_availability_by_specialist(desired_date: DateModel, specialist_name: L
         return f"An error occurred while checking availability: {str(e)}"
 
 @tool
-def check_availability_by_service(desired_date: DateModel, service: Literal["hairstylist", "nail_technician", "esthetician", "makeup_artist", "massage_therapist", "eyebrow_specialist", "colorist"]):
+def check_availability_by_service(desired_date: DateModel, service: str):
     """
-    Checking the database if we have availability for the specific service.
-    The parameters should be mentioned by the user in the query
+    Check availability for a specific service on a given date.
     """
-    #Dummy data
-    df = pd.read_csv(f"{WORKDIR}/data/syntetic_data/availability.csv")
-    df['date_slot_time'] = df['date_slot'].apply(lambda input: input.split(' ')[-1])
-    rows = df[(df['date_slot'].apply(lambda input: input.split(' ')[0]) == desired_date.date) & 
-              (df['service'] == service) & 
-              (df['is_available'] == True)]
+    logger = logging.getLogger(__name__)
+    logger.info(f"Checking availability for service: {service} on date: {desired_date.date}")
 
-    if len(rows) == 0:
-        return f"No availability for {service} on {desired_date.date}"
-    else:
-        available_slots = rows['date_slot_time'].tolist()
-        output = f'Available slots for {service} on {desired_date.date}:\n'
-        output += ", ".join(available_slots)
-        return output
+    try:
+        df = pd.read_csv(f"{WORKDIR}/data/syntetic_data/availability.csv")
+        
+        # Filter the dataframe for the specific date and service
+        available_slots = df[
+            (df['date_slot'].str.startswith(desired_date.date)) &
+            (df['service'] == service) &
+            (df['is_available'] == True)
+        ]
+
+        if available_slots.empty:
+            return f"No availability for {service} on {desired_date.date}"
+        
+        time_slots = available_slots['date_slot'].apply(lambda x: x.split(' ')[-1]).tolist()
+        return f"Available slots for {service} on {desired_date.date}: {', '.join(time_slots)}"
+
+    except Exception as e:
+        logger.error(f"Error checking availability: {str(e)}")
+        return f"An error occurred while checking availability: {str(e)}"
 
 @tool
 def reschedule_booking(old_date: DateTimeModel, new_date: DateTimeModel, id_number: IdentificationNumberModel, specialist_name: Literal["emma thompson", "olivia parker", "sophia chen", "mia rodriguez", "isabella kim", "ava johnson", "noah williams", "liam davis", "zoe martinez", "ethan brown"]):
@@ -124,21 +134,25 @@ def reschedule_booking(old_date: DateTimeModel, new_date: DateTimeModel, id_numb
         df.to_csv(f'{WORKDIR}/data/syntetic_data/availability.csv', index=False)
         
         # Update event in Google Calendar
-        from src.google_calendar import service
-        events_result = service.events().list(calendarId='primary', timeMin=old_date.date,
-                                              maxResults=10, singleEvents=True,
-                                              orderBy='startTime').execute()
-        events = events_result.get('items', [])
+        TIMEZONE = os.getenv('TIMEZONE', 'America/New_York')
+        old_datetime = datetime.strptime(old_date.date, "%Y-%m-%d %H:%M")
+        new_datetime = datetime.strptime(new_date.date, "%Y-%m-%d %H:%M")
         
+        events = google_calendar.list_upcoming_events()
         for event in events:
             if event['summary'] == f"Appointment with {specialist_name}" and event['description'] == f"Client ID: {id_number.id}":
-                event['start']['dateTime'] = new_date.date
-                event['end']['dateTime'] = (datetime.strptime(new_date.date, "%Y-%m-%d %H:%M") + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M")
-                updated_event = service.events().update(calendarId='primary', eventId=event['id'], body=event).execute()
-                break
+                event_id = event['id']
+                google_calendar.update_event(
+                    event_id,
+                    summary=f"Appointment with {specialist_name}",
+                    start_time=new_datetime.isoformat(),
+                    end_time=(new_datetime + timedelta(hours=1)).isoformat()
+                )
+                logger.info("Appointment successfully rescheduled")
+                return f"Your appointment has been successfully rescheduled from {old_date.date} to {new_date.date} with {specialist_name}. The Google Calendar event has been updated."
         
-        logger.info("Appointment successfully rescheduled")
-        return f"Your appointment has been successfully rescheduled from {old_date.date} to {new_date.date} with {specialist_name}. The Google Calendar event has been updated."
+        logger.error("Failed to find and update the Google Calendar event")
+        return "Appointment rescheduled in our system, but failed to update Google Calendar. Please contact support."
     
     except Exception as e:
         logger.error(f"Error in reschedule_booking: {str(e)}")
@@ -175,18 +189,13 @@ def cancel_booking(date: DateTimeModel, id_number: IdentificationNumberModel, sp
         df.to_csv(f'{WORKDIR}/data/syntetic_data/availability.csv', index=False)
         
         # Remove event from Google Calendar
-        from src.google_calendar import service
-        events_result = service.events().list(calendarId='primary', timeMin=date.date,
-                                              maxResults=10, singleEvents=True,
-                                              orderBy='startTime').execute()
-        events = events_result.get('items', [])
-        
+        events = google_calendar.list_upcoming_events()
         for event in events:
             if event['summary'] == f"Appointment with {specialist_name}" and event['description'] == f"Client ID: {id_number.id}":
-                service.events().delete(calendarId='primary', eventId=event['id']).execute()
-                break
+                google_calendar.delete_event(event['id'])
+                return "Successfully cancelled and removed from Google Calendar"
         
-        return "Successfully cancelled and removed from Google Calendar"
+        return "Appointment cancelled in our system, but not found in Google Calendar. Please contact support if you have any concerns."
 
 @tool
 def get_salon_services():
@@ -234,13 +243,13 @@ def book_appointment(desired_date: DateTimeModel, id_number: IdentificationNumbe
             end_time = start_time + timedelta(hours=1)
             summary = f"Appointment with {specialist_name}"
             description = f"Client ID: {id_number.id}"
-            event_id = add_event_to_calendar(start_time.isoformat(), end_time.isoformat(), summary, description)
             
-            if event_id:
-                logger.info(f"Appointment set and added to Google Calendar. Event ID: {event_id}")
-                return f"Appointment set successfully for {start_time.strftime('%Y-%m-%d %H:%M %Z')} with {specialist_name}. Your appointment ID is {event_id}."
-            else:
-                logger.error("Failed to add event to Google Calendar")
+            try:
+                google_calendar.create_event(summary, start_time.isoformat(), end_time.isoformat(), TIMEZONE)
+                logger.info(f"Appointment set and added to Google Calendar.")
+                return f"Appointment set successfully for {start_time.strftime('%Y-%m-%d %H:%M %Z')} with {specialist_name}."
+            except Exception as e:
+                logger.error(f"Failed to add event to Google Calendar: {str(e)}")
                 return "Appointment set in our system, but failed to add to Google Calendar. Please contact support."
         else:
             logger.info("No available slot found")
