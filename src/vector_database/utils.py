@@ -16,6 +16,8 @@ from src.validators.pinecone_validators import IndexNameStructure, ExpectedNewDa
 
 logger = logging.getLogger(__name__)
 
+load_dotenv()
+
 class PineconeManagment:
     def __init__(self):
         logger.info("Setting pinecone connection...")
@@ -27,15 +29,20 @@ class PineconeManagment:
         return metadata
 
     def reading_datasource(self):
+        # Get the current file's directory
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Construct the path to the data.json file
+        file_path = os.path.join(current_dir, '..', '..', 'faq', 'data.json')
+        
         loader = JSONLoader(
-            file_path=f'/faq/data.json',
+            file_path=file_path,
             jq_schema='.[]',
             text_content=False,
             metadata_func=self.__extract_metadata)
 
         return loader.load()
     
-    def creating_index(self, index_name: str, docs: Document, dimension=1536, metric="cosine", embedding = OpenAIEmbeddings(model="text-embedding-ada-002")):
+    def creating_index(self, index_name: str, docs: Document, dimension=1536, metric="cosine", embedding = OpenAIEmbeddings(model="text-embedding-3-small")):
         logger.info(f"Creating index {index_name}...")
         IndexNameStructure(index_name=index_name)
         pc = Pinecone(api_key=os.getenv('PINECONE_API_KEY'))
@@ -73,8 +80,8 @@ class PineconeManagment:
     def finding_similar_docs(self, user_query):
         docs = self.vdb.similarity_search_with_relevance_scores(
             query=user_query,
-            k=5,  # Increase from 3 to 5
-            score_threshold=0.7  # Lower from 0.9 to 0.7
+            k=5,  
+            score_threshold=0.7  
         )
         
         if not docs:

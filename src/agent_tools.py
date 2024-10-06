@@ -25,6 +25,34 @@ rag_chain = retriever | format_retrieved_docs
 # Initialize GoogleCalendarManager
 google_calendar = GoogleCalendarManager()
 
+def load_catalog():
+    with open('data/catalog.json', 'r') as file:
+        return json.load(file)
+
+@tool
+def get_specialists_by_service(service_name: str):
+    """
+    Retrieve specialists for a specific service.
+    Use this tool when you need to list specialists for a particular service.
+    """
+    catalog = load_catalog()
+    for service in catalog:
+        if service['service'].lower() == service_name.lower():
+            return [specialist['name'] for specialist in service['specialists']]
+    return []
+
+@tool
+def get_service_info(service_name: str):
+    """
+    Retrieve information about a specific service.
+    Use this tool when you need details about a particular service.
+    """
+    catalog = load_catalog()
+    for service in catalog:
+        if service['service'].lower() == service_name.lower():
+            return service
+    return None
+
 #All the tools to consider
 @tool
 def check_availability_by_specialist(desired_date: DateModel, specialist_name: Literal["emma thompson", "olivia parker", "sophia chen", "mia rodriguez", "isabella kim", "ava johnson", "noah williams", "liam davis", "zoe martinez", "ethan brown"]):
@@ -198,13 +226,10 @@ def cancel_booking(date: DateTimeModel, id_number: IdentificationNumberModel, sp
 @tool
 def get_salon_services():
     """
-    Obtain information about the specialists and services/services we provide.
-    The parameters MUST be mentioned by the user in the query
+    Obtain information about all the specialists and services we provide.
+    Use this tool when you need a complete list of services or specialists.
     """
-    with open(f"data/catalog.json","r") as file:
-        file = json.loads(file.read())
-    
-    return file
+    return load_catalog()
 
 @tool
 def book_appointment(desired_date: DateTimeModel, id_number: IdentificationNumberModel, specialist_name: Literal["emma thompson", "olivia parker", "sophia chen", "mia rodriguez", "isabella kim", "ava johnson", "noah williams", "liam davis", "zoe martinez", "ethan brown"]):

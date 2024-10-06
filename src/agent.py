@@ -12,7 +12,7 @@ from typing import TypedDict, Annotated, List, Literal
 from langchain_core.messages import AnyMessage, HumanMessage
 import operator
 from src.validators.agent_validators import *
-from src.agent_tools import check_availability_by_specialist, check_availability_by_service, book_appointment, cancel_booking, reminder_appointment, reschedule_booking, retrieve_faq_info, get_salon_services, get_specialist_services
+from src.agent_tools import check_availability_by_specialist, check_availability_by_service, book_appointment, cancel_booking, reminder_appointment, reschedule_booking, retrieve_faq_info, get_salon_services, get_specialist_services, get_specialists_by_service, get_service_info
 from datetime import datetime, timedelta
 from src.utils import get_model
 import logging
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class MessagesState(TypedDict):
     messages: Annotated[List[AnyMessage], operator.add]
 
-tools = [check_availability_by_specialist, check_availability_by_service, book_appointment, cancel_booking, reminder_appointment, reschedule_booking, retrieve_faq_info, get_salon_services, get_specialist_services]
+tools = [check_availability_by_specialist, check_availability_by_service, book_appointment, cancel_booking, reminder_appointment, reschedule_booking, retrieve_faq_info, get_salon_services, get_specialists_by_service, get_service_info]
 
 tool_node = ToolNode(tools)
 

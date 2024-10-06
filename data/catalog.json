@@ -8,12 +8,19 @@
         ],
         "specialists": [
             {
-                "name": "Emma Thompson"
+                "name": "Emma Thompson",
+                "experience": "10 years",
+                "rating": 4.8
             },
             {
-                "name": "Olivia Parker"
+                "name": "Olivia Parker",
+                "experience": "8 years",
+                "rating": 4.7
             }
-        ]
+        ],
+        "price_range": "$50 - $150",
+        "average_duration": "1 to 2 hours",
+        "description": "Our professional hairstylists offer personalized haircuts and treatments tailored to your style. From trims to transformations, we ensure you leave feeling confident and refreshed."
     },
     {
         "service": "Nail Technician",
@@ -24,12 +31,19 @@
         ],
         "specialists": [
             {
-                "name": "Sophia Chen"
+                "name": "Sophia Chen",
+                "experience": "7 years",
+                "rating": 4.9
             },
             {
-                "name": "Mia Rodriguez"
+                "name": "Mia Rodriguez",
+                "experience": "6 years",
+                "rating": 4.6
             }
-        ]
+        ],
+        "price_range": "$30 - $80",
+        "average_duration": "45 minutes to 1.5 hours",
+        "description": "Our expert nail technicians provide top-tier manicure and pedicure services, from classic styles to intricate nail art, ensuring that your hands and feet look their best."
     },
     {
         "service": "Esthetician",
@@ -40,9 +54,14 @@
         ],
         "specialists": [
             {
-                "name": "Isabella Kim"
+                "name": "Isabella Kim",
+                "experience": "12 years",
+                "rating": 4.9
             }
-        ]
+        ],
+        "price_range": "$60 - $200",
+        "average_duration": "1 to 2 hours",
+        "description": "Our estheticians offer comprehensive skincare treatments, including facials and hair removal services, to keep your skin glowing and smooth. Personalized consultations available."
     },
     {
         "service": "Makeup Artist",
@@ -53,9 +72,14 @@
         ],
         "specialists": [
             {
-                "name": "Ava Johnson"
+                "name": "Ava Johnson",
+                "experience": "9 years",
+                "rating": 4.8
             }
-        ]
+        ],
+        "price_range": "$100 - $300",
+        "average_duration": "1 to 2 hours",
+        "description": "Our makeup artists specialize in creating flawless looks for any occasion, from weddings to photoshoots. Using top-quality products, we ensure a long-lasting, perfect look."
     },
     {
         "service": "Massage Therapist",
@@ -66,12 +90,19 @@
         ],
         "specialists": [
             {
-                "name": "Noah Williams"
+                "name": "Noah Williams",
+                "experience": "15 years",
+                "rating": 4.9
             },
             {
-                "name": "Liam Davis"
+                "name": "Liam Davis",
+                "experience": "12 years",
+                "rating": 4.7
             }
-        ]
+        ],
+        "price_range": "$80 - $180",
+        "average_duration": "1 to 1.5 hours",
+        "description": "Our massage therapists offer therapeutic and relaxation massages tailored to your needs. Whether you seek relief from tension or a relaxing escape, our team is here to help."
     },
     {
         "service": "Eyebrow Specialist",
@@ -82,9 +113,14 @@
         ],
         "specialists": [
             {
-                "name": "Zoe Martinez"
+                "name": "Zoe Martinez",
+                "experience": "6 years",
+                "rating": 4.8
             }
-        ]
+        ],
+        "price_range": "$20 - $50",
+        "average_duration": "30 to 45 minutes",
+        "description": "Our eyebrow specialists offer a variety of shaping and tinting techniques to achieve the perfect brow. From threading to waxing, we customize each service to your needs."
     },
     {
         "service": "Colorist",
@@ -95,8 +131,13 @@
         ],
         "specialists": [
             {
-                "name": "Ethan Brown"
+                "name": "Ethan Brown",
+                "experience": "10 years",
+                "rating": 4.8
             }
-        ]
+        ],
+        "price_range": "$100 - $250",
+        "average_duration": "2 to 3 hours",
+        "description": "Our colorists are experts in creating stunning color transformations, from subtle highlights to bold color changes. Each session begins with a thorough consultation to achieve the perfect look."
     }
 ]
