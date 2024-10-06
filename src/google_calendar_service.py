@@ -59,48 +59,44 @@ class GoogleCalendarManager:
             print(f'An error occurred: {error}')
             return []
 
-    def create_event(self, summary, start_time, end_time, timezone, attendees=None):
-        event = {
-            'summary': summary,
-            'start': {
-                'dateTime': start_time,
-                'timeZone': timezone,
-            },
-            'end': {
-                'dateTime': end_time,
-                'timeZone': timezone,
-            }
-        }
-
-        if attendees:
-            event["attendees"] = [{"email": email} for email in attendees]
-
+    def create_event(self, summary, start_time, end_time, timezone):
         try:
-            event = self.service.events().insert(calendarId=self.calendar_id, body=event).execute()
-            print(f"Event created: {event.get('htmlLink')}")
+            event = {
+                'summary': summary,
+                'start': {'dateTime': start_time, 'timeZone': timezone},
+                'end': {'dateTime': end_time, 'timeZone': timezone},
+            }
+            created_event = self.service.events().insert(calendarId=self.calendar_id, body=event).execute()
+            return created_event
         except HttpError as error:
-            print(f"An error has occurred: {error}")
+            print(f'An error occurred: {error}')
+            return None
 
-    def update_event(self, event_id, summary=None, start_time=None, end_time=None):
-        event = self.service.events().get(calendarId=self.calendar_id, eventId=event_id).execute()
+    def update_event(self, event_id, summary, start_time, end_time, timezone):
+        event = self.service.events().get(calendarId='primary', eventId=event_id).execute()
+        
+        event['summary'] = summary
+        event['start'] = {'dateTime': start_time, 'timeZone': timezone}
+        event['end'] = {'dateTime': end_time, 'timeZone': timezone}
 
-        if summary:
-            event['summary'] = summary
-
-        if start_time:
-            event['start']['dateTime'] = start_time
-
-        if end_time:
-            event['end']['dateTime'] = end_time
-
-        updated_event = self.service.events().update(
-            calendarId=self.calendar_id, eventId=event_id, body=event).execute()
+        updated_event = self.service.events().update(calendarId='primary', eventId=event_id, body=event).execute()
         return updated_event
 
     def delete_event(self, event_id):
         self.service.events().delete(calendarId=self.calendar_id, eventId=event_id).execute()
         return True
-    
+
+    def search_events(self, start_time, end_time, q=None):
+        events_result = self.service.events().list(
+            calendarId=self.calendar_id,
+            timeMin=start_time,
+            timeMax=end_time,
+            q=q,
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
+        return events_result.get('items', [])
+
 
 if __name__ == "__main__":
     

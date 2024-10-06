@@ -131,6 +131,15 @@ def reschedule_booking(old_date: DateTimeModel, new_date: DateTimeModel, id_numb
     try:
         df = pd.read_csv(f'data/syntetic_data/availability.csv')
         
+        # Find the old appointment first
+        old_appointment = df[(df['date_slot'] == old_date.date) & 
+                             (df['specialist_name'] == specialist_name) & 
+                             (df['client_to_attend'] == float(id_number.id))]
+        
+        if old_appointment.empty:
+            logger.warning("No existing appointment found to reschedule")
+            return "No existing appointment found with the provided details. Please check your information and try again."
+        
         # Check if the new slot is available
         new_slot_available = df[(df['date_slot'] == new_date.date) & 
                                 (df['specialist_name'] == specialist_name) & 
@@ -140,46 +149,38 @@ def reschedule_booking(old_date: DateTimeModel, new_date: DateTimeModel, id_numb
             logger.warning("The requested new slot is not available")
             return "The requested new time slot is not available. Please choose a different time."
         
-        # Find the old appointment
-        old_appointment = df[(df['date_slot'] == old_date.date) & 
-                             (df['specialist_name'] == specialist_name) & 
-                             (df['client_to_attend'] == float(id_number.id))]
+        # Get the event_id from the old appointment
+        event_id = old_appointment['event_id'].iloc[0]
         
-        if old_appointment.empty:
-            logger.warning("No existing appointment found to reschedule")
-            return "No existing appointment found with the provided details. Please check your information and try again."
-        
-        # Update the old slot to available
-        df.loc[old_appointment.index, ['is_available', 'client_to_attend']] = [True, None]
-        
-        # Book the new slot
-        new_slot_index = new_slot_available.index[0]
-        df.loc[new_slot_index, ['is_available', 'client_to_attend']] = [False, float(id_number.id)]
-        
-        # Save the updated DataFrame
-        df.to_csv(f'data/syntetic_data/availability.csv', index=False)
-        
-        # Update event in Google Calendar
+        # Update the Google Calendar event
         TIMEZONE = os.getenv('TIMEZONE', 'America/New_York')
-        old_datetime = datetime.strptime(old_date.date, "%Y-%m-%d %H:%M")
-        new_datetime = datetime.strptime(new_date.date, "%Y-%m-%d %H:%M")
+        new_datetime = datetime.strptime(new_date.date, "%Y-%m-%d %H:%M").replace(tzinfo=ZoneInfo(TIMEZONE))
         
-        events = google_calendar.list_upcoming_events()
-        for event in events:
-            if event['summary'] == f"Appointment with {specialist_name}" and event['description'] == f"Client ID: {id_number.id}":
-                event_id = event['id']
-                google_calendar.update_event(
-                    event_id,
-                    summary=f"Appointment with {specialist_name}",
-                    start_time=new_datetime.isoformat(),
-                    end_time=(new_datetime + timedelta(hours=1)).isoformat()
-                )
-                logger.info("Appointment successfully rescheduled")
-                return f"Your appointment has been successfully rescheduled from {old_date.date} to {new_date.date} with {specialist_name}. The Google Calendar event has been updated."
-        
-        logger.error("Failed to find and update the Google Calendar event")
-        return "Appointment rescheduled in our system, but failed to update Google Calendar. Please contact support."
-    
+        updated_event = google_calendar.update_event(
+            event_id,
+            summary=f"Appointment with {specialist_name}",
+            start_time=new_datetime.isoformat(),
+            end_time=(new_datetime + timedelta(hours=1)).isoformat(),
+            timezone=TIMEZONE
+        )
+
+        if updated_event:
+            # Update the availability data
+            df.loc[old_appointment.index, 'is_available'] = True
+            df.loc[old_appointment.index, 'client_to_attend'] = None
+            df.loc[old_appointment.index, 'event_id'] = None
+            
+            df.loc[new_slot_available.index, 'is_available'] = False
+            df.loc[new_slot_available.index, 'client_to_attend'] = id_number.id
+            df.loc[new_slot_available.index, 'event_id'] = event_id
+            
+            df.to_csv(f'data/syntetic_data/availability.csv', index=False)
+            logger.info("Availability updated after rescheduling")
+
+            return f"Appointment rescheduled successfully to {new_datetime.strftime('%Y-%m-%d %H:%M %Z')} with {specialist_name}."
+        else:
+            return "Failed to reschedule the appointment. Please try again or contact support."
+
     except Exception as e:
         logger.error(f"Error in reschedule_booking: {str(e)}")
         return f"An error occurred while rescheduling the appointment: {str(e)}"
@@ -190,46 +191,63 @@ def cancel_booking(date: DateTimeModel, id_number: IdentificationNumberModel, sp
     Canceling an appointment and removing it from Google Calendar.
     The parameters MUST be mentioned by the user in the query.
     """
-    df = pd.read_csv(f'data/syntetic_data/availability.csv')
+    logger = logging.getLogger(__name__)
+    logger.info(f"Attempting to cancel appointment: date={date.date}, id={id_number.id}, specialist={specialist_name}")
     
-    # Convert client_to_attend to float for comparison
-    df['client_to_attend'] = pd.to_numeric(df['client_to_attend'], errors='coerce')
-    
-    # Convert date to string for comparison
-    date_str = date.date.split()[0]  # Extract just the date part
-    
-    case_to_remove = df[
-        (df['date_slot'].str.startswith(date_str)) &
-        (df['client_to_attend'] == float(id_number.id)) &
-        (df['specialist_name'] == specialist_name)
-    ]
-    
-    if case_to_remove.empty:
-        return "You don't have any appointment with those specifications"
-    else:
-        # Update the row
-        df.loc[case_to_remove.index, 'is_available'] = True
-        df.loc[case_to_remove.index, 'client_to_attend'] = None
+    try:
+        df = pd.read_csv(f'data/syntetic_data/availability.csv')
         
-        # Save the updated DataFrame back to CSV
-        df.to_csv(f'data/syntetic_data/availability.csv', index=False)
+        # Convert client_to_attend to float for comparison
+        df['client_to_attend'] = pd.to_numeric(df['client_to_attend'], errors='coerce')
         
-        # Remove event from Google Calendar
-        events = google_calendar.list_upcoming_events()
-        for event in events:
-            if event['summary'] == f"Appointment with {specialist_name}" and event['description'] == f"Client ID: {id_number.id}":
-                google_calendar.delete_event(event['id'])
+        # Convert date to string for comparison
+        date_str = date.date.split()[0]  # Extract just the date part
+        
+        case_to_remove = df[
+            (df['date_slot'].str.startswith(date_str)) &
+            (df['client_to_attend'] == float(id_number.id)) &
+            (df['specialist_name'] == specialist_name)
+        ]
+        
+        if case_to_remove.empty:
+            logger.warning("No appointment found to cancel")
+            return "You don't have any appointment with those specifications"
+        else:
+            # Get the event_id before updating the row
+            event_id = case_to_remove['event_id'].iloc[0]
+            
+            # Update the row
+            df.loc[case_to_remove.index, 'is_available'] = True
+            df.loc[case_to_remove.index, 'client_to_attend'] = None
+            df.loc[case_to_remove.index, 'event_id'] = None
+            
+            # Save the updated DataFrame back to CSV
+            df.to_csv(f'data/syntetic_data/availability.csv', index=False)
+            logger.info("Availability updated after cancellation")
+            
+            # Remove event from Google Calendar
+            if event_id:
+                google_calendar.delete_event(event_id)
+                logger.info(f"Event {event_id} deleted from Google Calendar")
                 return "Successfully cancelled and removed from Google Calendar"
-        
-        return "Appointment cancelled in our system, but not found in Google Calendar. Please contact support if you have any concerns."
+            else:
+                logger.warning("No event_id found for the appointment")
+                return "Appointment cancelled in our system, but no corresponding Google Calendar event found. Please contact support if you have any concerns."
+    
+    except Exception as e:
+        logger.error(f"Error in cancel_booking: {str(e)}")
+        return f"An error occurred while cancelling the appointment: {str(e)}"
 
 @tool
 def get_salon_services():
     """
-    Obtain information about all the specialists and services we provide.
-    Use this tool when you need a complete list of services or specialists.
+    Obtain information about the specialists and services/services we provide.
+    The parameters MUST be mentioned by the user in the query
     """
-    return load_catalog()
+    with open(f"data/catalog.json","r") as file:
+        file = json.loads(file.read())
+    
+    return file
 
 @tool
 def book_appointment(desired_date: DateTimeModel, id_number: IdentificationNumberModel, specialist_name: Literal["emma thompson", "olivia parker", "sophia chen", "mia rodriguez", "isabella kim", "ava johnson", "noah williams", "liam davis", "zoe martinez", "ethan brown"]):
@@ -253,27 +271,33 @@ def book_appointment(desired_date: DateTimeModel, id_number: IdentificationNumbe
         logger.info(f"Matching cases found: {len(case)}")
         
         if len(case) > 0:
-            # Update availability
-            df.loc[(df['date_slot'] == formatted_date) & (df['specialist_name'] == specialist_name), 'is_available'] = False
-            df.loc[(df['date_slot'] == formatted_date) & (df['specialist_name'] == specialist_name), 'client_to_attend'] = id_number.id
-            df.to_csv(f'data/syntetic_data/availability.csv', index=False)
-            logger.info("Availability updated")
-            
             # Add to Google Calendar
             TIMEZONE = os.getenv('TIMEZONE', 'America/New_York')
 
-            start_time = desired_datetime.replace(tzinfo=ZoneInfo(TIMEZONE))
+            start_time = desired_datetime.astimezone(ZoneInfo(TIMEZONE))
             end_time = start_time + timedelta(hours=1)
             summary = f"Appointment with {specialist_name}"
             description = f"Client ID: {id_number.id}"
             
-            try:
-                google_calendar.create_event(summary, start_time.isoformat(), end_time.isoformat(), TIMEZONE)
-                logger.info(f"Appointment set and added to Google Calendar.")
-                return f"Appointment set successfully for {start_time.strftime('%Y-%m-%d %H:%M %Z')} with {specialist_name}."
-            except Exception as e:
-                logger.error(f"Failed to add event to Google Calendar: {str(e)}")
-                return "Appointment set in our system, but failed to add to Google Calendar. Please contact support."
+            logger.info(f"Attempting to create Google Calendar event: summary={summary}, start_time={start_time.isoformat()}, end_time={end_time.isoformat()}, timezone={TIMEZONE}")
+            
+            event = google_calendar.create_event(summary, start_time.isoformat(), end_time.isoformat(), TIMEZONE)
+            
+            if event is None:
+                logger.error("Failed to create event in Google Calendar")
+                return "Failed to add appointment to Google Calendar. The appointment is not booked. Please try again or contact support."
+            
+            event_id = event['id']
+            logger.info(f"Appointment added to Google Calendar with event ID: {event_id}")
+            
+            # Update availability
+            df.loc[(df['date_slot'] == formatted_date) & (df['specialist_name'] == specialist_name), 'is_available'] = False
+            df.loc[(df['date_slot'] == formatted_date) & (df['specialist_name'] == specialist_name), 'client_to_attend'] = id_number.id
+            df.loc[(df['date_slot'] == formatted_date) & (df['specialist_name'] == specialist_name), 'event_id'] = event_id
+            df.to_csv(f'data/syntetic_data/availability.csv', index=False)
+            logger.info("Availability updated with event ID")
+            
+            return f"Appointment set successfully for {start_time.strftime('%Y-%m-%d %H:%M %Z')} with {specialist_name}."
         else:
             logger.info("No available slot found")
             return f"Sorry, no available slot found for {specialist_name} on {formatted_date}. Please try a different date or specialist."
