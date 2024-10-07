@@ -6,12 +6,17 @@ from src.telegram_bot import run_telegram_bot
 from src.agent import gradio_interface
 import uvicorn
 import gradio as gr
+from src.database import engine, Base
+from src.init_db import init_db
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    logger.info("Initializing database...")
+    init_db()
     logger.info("Starting Telegram bot...")
     telegram_task = asyncio.create_task(run_telegram_bot())
     yield

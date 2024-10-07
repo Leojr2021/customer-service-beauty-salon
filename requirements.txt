@@ -18,3 +18,5 @@ google-auth-oauthlib
 google-auth-httplib2
 google-api-python-client
 fastapi
+psycopg2-binary
+SQLAlchemy

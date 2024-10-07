@@ -4,6 +4,8 @@ import sys
 import logging
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+from typing import Union
+from sqlalchemy import Date, cast
 
 load_dotenv()
 
@@ -16,6 +18,8 @@ import json
 from src.vector_database.main import PineconeManagment
 from src.utils import format_retrieved_docs
 from src.google_calendar_service import GoogleCalendarManager
+from src.database import get_db, Availability
+from sqlalchemy.orm import Session
 
 pinecone_conn = PineconeManagment()
 pinecone_conn.loading_vdb(index_name='zenbeautysalon')
@@ -24,6 +28,10 @@ rag_chain = retriever | format_retrieved_docs
 
 # Initialize GoogleCalendarManager
 google_calendar = GoogleCalendarManager()
+
+# Define DateStructure and IdStructure
+DateStructure = Union[str, datetime]
+IdStructure = Union[str, int]
 
 def load_catalog():
     with open('data/catalog.json', 'r') as file:
@@ -55,34 +63,32 @@ def get_service_info(service_name: str):
 
 #All the tools to consider
 @tool
-def check_availability_by_specialist(desired_date: DateModel, specialist_name: Literal["emma thompson", "olivia parker", "sophia chen", "mia rodriguez", "isabella kim", "ava johnson", "noah williams", "liam davis", "zoe martinez", "ethan brown"]):
+def check_availability_by_specialist(desired_date: dict, specialist_name: str):
     """
     Checking the database if we have availability for the specific specialist.
-    The parameters should be mentioned by the user in the query
+    The parameters MUST be mentioned by the user in the query
     """
-    logger = logging.getLogger(__name__)
-    logger.info(f"Checking availability for date: {desired_date.date}, specialist: {specialist_name}")
-
+    logger.info(f"Checking availability for date: {desired_date['date']}, specialist: {specialist_name}")
+    
+    db = next(get_db())
     try:
-        # Load the data
-        df = pd.read_csv(f"data/syntetic_data/availability.csv")
-        logger.info(f"Availability data loaded. Shape: {df.shape}")
-
-        # Filter the dataframe
-        available_slots = df[
-            (df['date_slot'].str.startswith(desired_date.date)) &
-            (df['specialist_name'] == specialist_name) &
-            (df['is_available'] == True)
-        ]
+        date_to_check = datetime.strptime(desired_date['date'], "%Y-%m-%d").date()
+        
+        # Query the database for available slots
+        available_slots = db.query(Availability).filter(
+            cast(Availability.date_slot, Date) == date_to_check,
+            Availability.specialist_name == specialist_name,
+            Availability.is_available == True
+        ).all()
 
         # Extract time slots
-        time_slots = available_slots['date_slot'].apply(lambda x: x.split(' ')[-1]).tolist()
+        time_slots = [slot.date_slot.strftime("%H:%M") for slot in available_slots]
 
         if not time_slots:
-            logger.info(f"No availability found for {specialist_name} on {desired_date.date}")
-            return f"No availability for {specialist_name} on {desired_date.date}"
+            logger.info(f"No availability found for {specialist_name} on {date_to_check}")
+            return f"No availability for {specialist_name} on {date_to_check}"
         else:
-            output = f"Available slots for {specialist_name} on {desired_date.date}:\n"
+            output = f"Available slots for {specialist_name} on {date_to_check}:\n"
             output += ", ".join(time_slots)
             logger.info(f"Found {len(time_slots)} available slots")
             return output
@@ -90,34 +96,65 @@ def check_availability_by_specialist(desired_date: DateModel, specialist_name: L
     except Exception as e:
         logger.error(f"Error checking availability: {str(e)}")
         return f"An error occurred while checking availability: {str(e)}"
+    finally:
+        db.close()
 
 @tool
-def check_availability_by_service(desired_date: DateModel, service: str):
+def check_availability_by_service(desired_date: str, service: str):
     """
     Check availability for a specific service on a given date.
+    
+    Args:
+    desired_date (str): The date to check availability for, in YYYY-MM-DD format.
+    service (str): The name of the service to check availability for.
+
+    Returns:
+    str: A formatted string of available time slots for the specified service and date.
     """
     logger = logging.getLogger(__name__)
-    logger.info(f"Checking availability for service: {service} on date: {desired_date.date}")
-
+    logger.info(f"Checking availability for service: {service} on date: {desired_date}")
+    
+    db = next(get_db())
     try:
-        df = pd.read_csv(f"data/syntetic_data/availability.csv")
+        # Convert the desired_date string to a datetime object
+        date_obj = datetime.strptime(desired_date, "%Y-%m-%d")
         
-        # Filter the dataframe for the specific date and service
-        available_slots = df[
-            (df['date_slot'].str.startswith(desired_date.date)) &
-            (df['service'] == service) &
-            (df['is_available'] == True)
-        ]
-
-        if available_slots.empty:
-            return f"No availability for {service} on {desired_date.date}"
+        # Set the time to the start of the day
+        start_of_day = date_obj.replace(hour=0, minute=0, second=0, microsecond=0)
         
-        time_slots = available_slots['date_slot'].apply(lambda x: x.split(' ')[-1]).tolist()
-        return f"Available slots for {service} on {desired_date.date}: {', '.join(time_slots)}"
-
+        # Set the time to the end of the day
+        end_of_day = start_of_day + timedelta(days=1) - timedelta(microseconds=1)
+        
+        logger.info(f"Query parameters: start={start_of_day}, end={end_of_day}")
+        
+        # Query the database for available slots
+        available_slots = db.query(Availability).filter(
+            and_(
+                Availability.specialization == service,
+                Availability.date_slot >= start_of_day,
+                Availability.date_slot <= end_of_day,
+                Availability.is_available == True
+            )
+        ).all()
+        
+        logger.info(f"Query returned {len(available_slots)} results")
+        
+        if not available_slots:
+            logger.info(f"No availability found for {service} on {date_obj.date()}")
+            return f"No availability for {service} on {date_obj.date()}"
+        
+        # Format the results
+        output = f"Available slots for {service} on {date_obj.date()}:\n"
+        for slot in available_slots:
+            output += f"- {slot.date_slot.strftime('%H:%M')} with {slot.specialist_name}\n"
+        
+        logger.info(f"Found {len(available_slots)} available slots for {service} on {date_obj.date()}")
+        return output
     except Exception as e:
         logger.error(f"Error checking availability: {str(e)}")
         return f"An error occurred while checking availability: {str(e)}"
+    finally:
+        db.close()
 
 @tool
 def reschedule_booking(old_date: DateTimeModel, new_date: DateTimeModel, id_number: IdentificationNumberModel, specialist_name: Literal["emma thompson", "olivia parker", "sophia chen", "mia rodriguez", "isabella kim", "ava johnson", "noah williams", "liam davis", "zoe martinez", "ethan brown"]):
@@ -250,61 +287,61 @@ def get_salon_services():
     return file
 
 @tool
-def book_appointment(desired_date: DateTimeModel, id_number: IdentificationNumberModel, specialist_name: Literal["emma thompson", "olivia parker", "sophia chen", "mia rodriguez", "isabella kim", "ava johnson", "noah williams", "liam davis", "zoe martinez", "ethan brown"]):
+def book_appointment(desired_date: str, id_number: str, specialist_name: str):
     """
-    Set appointment with the specialist and add it to Google Calendar.
-    The parameters MUST be mentioned by the user in the query.
-    """
-    logger = logging.getLogger(__name__)
-    logger.info(f"Attempting to set appointment with parameters: date={desired_date.date}, id={id_number.id}, specialist={specialist_name}")
-    try:
-        df = pd.read_csv(f'data/syntetic_data/availability.csv')
-        logger.info(f"Availability data loaded. Shape: {df.shape}")
-        
-        # Convert desired_date to datetime object
-        desired_datetime = datetime.strptime(desired_date.date, "%Y-%m-%d %H:%M")
-        
-        # Format the date string to match the CSV format
-        formatted_date = desired_datetime.strftime("%Y-%m-%d %H:%M")
-        
-        case = df[(df['date_slot'] == formatted_date) & (df['specialist_name'] == specialist_name) & (df['is_available'] == True)]
-        logger.info(f"Matching cases found: {len(case)}")
-        
-        if len(case) > 0:
-            # Add to Google Calendar
-            TIMEZONE = os.getenv('TIMEZONE', 'America/New_York')
+    Book an appointment with a specialist on a specific date.
+    
+    Args:
+    desired_date (str): The desired date and time for the appointment.
+    id_number (str): The identification number of the client.
+    specialist_name (str): The name of the specialist for the appointment.
 
-            start_time = desired_datetime.astimezone(ZoneInfo(TIMEZONE))
-            end_time = start_time + timedelta(hours=1)
-            summary = f"Appointment with {specialist_name}"
-            description = f"Client ID: {id_number.id}"
-            
-            logger.info(f"Attempting to create Google Calendar event: summary={summary}, start_time={start_time.isoformat()}, end_time={end_time.isoformat()}, timezone={TIMEZONE}")
-            
-            event = google_calendar.create_event(summary, start_time.isoformat(), end_time.isoformat(), TIMEZONE)
+    Returns:
+    str: A message confirming the booking or explaining why it couldn't be booked.
+    """
+    logger.info(f"Attempting to book appointment: {desired_date}, {id_number}, {specialist_name}")
+    db = next(get_db())
+    try:
+        desired_datetime = datetime.strptime(desired_date, "%Y-%m-%d %H:%M")
+        
+        availability = db.query(Availability).filter(
+            Availability.date_slot == desired_datetime,
+            Availability.specialist_name == specialist_name,
+            Availability.is_available == True
+        ).first()
+        
+        if availability:
+            logger.info(f"Availability found for {specialist_name} at {desired_datetime}")
+            # Add to Google Calendar
+            event = google_calendar.create_event(
+                summary=f"Appointment with {specialist_name}",
+                start_time=desired_datetime.isoformat(),
+                end_time=(desired_datetime + timedelta(hours=1)).isoformat(),
+                timezone=os.getenv('TIMEZONE', 'America/New_York')
+            )
             
             if event is None:
-                logger.error("Failed to create event in Google Calendar")
+                logger.error("Failed to add appointment to Google Calendar")
                 return "Failed to add appointment to Google Calendar. The appointment is not booked. Please try again or contact support."
             
-            event_id = event['id']
-            logger.info(f"Appointment added to Google Calendar with event ID: {event_id}")
+            logger.info(f"Event added to Google Calendar: {event['id']}")
             
-            # Update availability
-            df.loc[(df['date_slot'] == formatted_date) & (df['specialist_name'] == specialist_name), 'is_available'] = False
-            df.loc[(df['date_slot'] == formatted_date) & (df['specialist_name'] == specialist_name), 'client_to_attend'] = id_number.id
-            df.loc[(df['date_slot'] == formatted_date) & (df['specialist_name'] == specialist_name), 'event_id'] = event_id
-            df.to_csv(f'data/syntetic_data/availability.csv', index=False)
-            logger.info("Availability updated with event ID")
+            # Update availability in the database
+            availability.is_available = False
+            availability.client_to_attend = id_number
+            availability.event_id = event['id']
+            db.commit()
+            logger.info(f"Database updated for appointment: {event['id']}")
             
-            return f"Appointment set successfully for {start_time.strftime('%Y-%m-%d %H:%M %Z')} with {specialist_name}."
+            return f"Appointment booked successfully for {desired_date} with {specialist_name}. Event ID: {event['id']}"
         else:
-            logger.info("No available slot found")
-            return f"Sorry, no available slot found for {specialist_name} on {formatted_date}. Please try a different date or specialist."
+            logger.warning(f"No availability found for {specialist_name} at {desired_datetime}")
+            return "No availability found for the specified date and specialist."
     except Exception as e:
-        logger.error(f"Error setting appointment: {str(e)}")
-        return f"An error occurred while setting the appointment: {str(e)}"
-
+        logger.error(f"Error booking appointment: {str(e)}")
+        return f"An error occurred while booking the appointment: {str(e)}"
+    finally:
+        db.close()
 
 @tool
 def reminder_appointment(id_number:IdentificationNumberModel):
@@ -342,3 +379,4 @@ def get_specialist_services(specialist_name:Literal["emma thompson","olivia park
         catalog = json.loads(file.read())
 
     return str([{service['service']: [specialist['name'] for specialist in service['specialists']]} for service in catalog])
+
