@@ -73,14 +73,25 @@ class GoogleCalendarManager:
             return None
 
     def update_event(self, event_id, summary, start_time, end_time, timezone):
-        event = self.service.events().get(calendarId='primary', eventId=event_id).execute()
-        
-        event['summary'] = summary
-        event['start'] = {'dateTime': start_time, 'timeZone': timezone}
-        event['end'] = {'dateTime': end_time, 'timeZone': timezone}
+        try:
+            event = self.service.events().get(calendarId=self.calendar_id, eventId=event_id).execute()
+            
+            print(f"Original event: {json.dumps(event, indent=2)}")
+            
+            event['summary'] = summary
+            event['start'] = {'dateTime': start_time, 'timeZone': timezone}
+            event['end'] = {'dateTime': end_time, 'timeZone': timezone}
 
-        updated_event = self.service.events().update(calendarId='primary', eventId=event_id, body=event).execute()
-        return updated_event
+            print(f"Updating event with data: {json.dumps(event, indent=2)}")
+
+            updated_event = self.service.events().update(calendarId=self.calendar_id, eventId=event_id, body=event).execute()
+            
+            print(f"Updated event response: {json.dumps(updated_event, indent=2)}")
+            
+            return updated_event
+        except HttpError as error:
+            print(f'An error occurred while updating event: {error}')
+            return None
 
     def delete_event(self, event_id):
         self.service.events().delete(calendarId=self.calendar_id, eventId=event_id).execute()

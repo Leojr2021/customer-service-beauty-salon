@@ -131,6 +131,10 @@ def reschedule_booking(old_date: DateTimeModel, new_date: DateTimeModel, id_numb
     try:
         df = pd.read_csv(f'data/syntetic_data/availability.csv')
         
+        # Convert string dates to datetime objects
+        old_datetime = datetime.strptime(old_date.date, "%Y-%m-%d %H:%M")
+        new_datetime = datetime.strptime(new_date.date, "%Y-%m-%d %H:%M")
+        
         # Find the old appointment first
         old_appointment = df[(df['date_slot'] == old_date.date) & 
                              (df['specialist_name'] == specialist_name) & 
@@ -154,32 +158,35 @@ def reschedule_booking(old_date: DateTimeModel, new_date: DateTimeModel, id_numb
         
         # Update the Google Calendar event
         TIMEZONE = os.getenv('TIMEZONE', 'America/New_York')
-        new_datetime = datetime.strptime(new_date.date, "%Y-%m-%d %H:%M").replace(tzinfo=ZoneInfo(TIMEZONE))
+        start_time = new_datetime.astimezone(ZoneInfo(TIMEZONE))
+        end_time = start_time + timedelta(hours=1)
         
         updated_event = google_calendar.update_event(
             event_id,
             summary=f"Appointment with {specialist_name}",
-            start_time=new_datetime.isoformat(),
-            end_time=(new_datetime + timedelta(hours=1)).isoformat(),
+            start_time=start_time.isoformat(),
+            end_time=end_time.isoformat(),
             timezone=TIMEZONE
         )
 
-        if updated_event:
-            # Update the availability data
-            df.loc[old_appointment.index, 'is_available'] = True
-            df.loc[old_appointment.index, 'client_to_attend'] = None
-            df.loc[old_appointment.index, 'event_id'] = None
-            
-            df.loc[new_slot_available.index, 'is_available'] = False
-            df.loc[new_slot_available.index, 'client_to_attend'] = id_number.id
-            df.loc[new_slot_available.index, 'event_id'] = event_id
-            
-            df.to_csv(f'data/syntetic_data/availability.csv', index=False)
-            logger.info("Availability updated after rescheduling")
+        if updated_event is None:
+            print(f"Failed to update event {event_id}. It may no longer exist.")
+            # Handle the failure (e.g., create a new event instead, or inform the user)
+            return False
+        
+        # Update the availability data
+        df.loc[old_appointment.index, 'is_available'] = True
+        df.loc[old_appointment.index, 'client_to_attend'] = None
+        df.loc[old_appointment.index, 'event_id'] = None
+        
+        df.loc[new_slot_available.index, 'is_available'] = False
+        df.loc[new_slot_available.index, 'client_to_attend'] = id_number.id
+        df.loc[new_slot_available.index, 'event_id'] = event_id
+        
+        df.to_csv(f'data/syntetic_data/availability.csv', index=False)
+        logger.info("Availability updated after rescheduling")
 
-            return f"Appointment rescheduled successfully to {new_datetime.strftime('%Y-%m-%d %H:%M %Z')} with {specialist_name}."
-        else:
-            return "Failed to reschedule the appointment. Please try again or contact support."
+        return f"Appointment rescheduled successfully to {new_datetime.strftime('%Y-%m-%d %H:%M %Z')} with {specialist_name}."
 
     except Exception as e:
         logger.error(f"Error in reschedule_booking: {str(e)}")
