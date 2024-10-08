@@ -4,7 +4,11 @@ import logging
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+import re
 from src.agent import chat_with_ai
+from telegram.helpers import escape_markdown
+
+
 
 load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -14,6 +18,33 @@ logging.basicConfig(
     level=logging.DEBUG
 )
 logger = logging.getLogger(__name__)
+
+def telegram_escape(text):
+    # Replace **text** with *text* for Telegram bold
+    text = re.sub(r'\*\*(.*?)\*\*', r'*\1*', text)
+
+    # Escape special characters
+    special_chars = '_[]()~`>#+-=|{}.!'
+    text = re.sub(r'([%s])' % re.escape(special_chars), r'\\\1', text)
+
+    # Escape all asterisks
+    text = text.replace('*', '\\*')
+
+    # Unescape asterisks used for bold formatting
+    text = re.sub(r'\\\*(.*?)\\\*', r'*\1*', text)
+
+    return text
+
+def format_for_telegram(text):
+    # Escape special characters
+    escape_chars = r'_*[]()~`>#+-=|{}.!'
+    for char in escape_chars:
+        text = text.replace(char, f'\\{char}')
+    
+    # Replace ** with * for bold
+    text = re.sub(r'\*\*(.*?)\*\*', r'*\1*', text)
+    
+    return text
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.info(f"Received /start command from user {update.effective_user.id}")
@@ -28,8 +59,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # Run chat_with_ai in a separate thread to avoid blocking
         ai_response = await asyncio.to_thread(chat_with_ai, user_message, chat_history)
         
-        logger.info(f"Sending response to user {update.effective_user.id}: {ai_response}")
-        await update.message.reply_text(ai_response)
+        # Escape text for Telegram MarkdownV2, preserving bold formatting
+        formatted_response = telegram_escape(ai_response)
+        
+        logger.info(f"Sending response to user {update.effective_user.id}: {formatted_response}")
+        await update.message.reply_text(formatted_response, parse_mode='MarkdownV2')
         
         # Update chat history
         if 'chat_history' not in context.user_data:
@@ -40,7 +74,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         context.user_data['chat_history'] = context.user_data['chat_history'][-10:]
     except Exception as e:
         logger.error(f"Error processing message for user {update.effective_user.id}: {str(e)}")
-        await update.message.reply_text("I apologize, but I encountered an error while processing your message. Please try again later.")
+        await update.message.reply_text(
+            "I apologize, but I encountered an error while processing your message. Please try again later."
+        )
+
 
 async def run_telegram_bot():
     logger.info("Initializing Telegram bot...")
